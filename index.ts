@@ -1,18 +1,19 @@
 #!/usr/bin/env node
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
   CallToolRequestSchema,
-  ListToolsRequestSchema,
-  Tool,
-  McpError,
   ErrorCode,
+  ListToolsRequestSchema,
+  McpError,
+  Tool,
 } from "@modelcontextprotocol/sdk/types.js";
-import fetch from "node-fetch";
 import * as cheerio from "cheerio";
-import { cleanObject, flattenArraysInObject, pickBySchema } from "./util.js";
+import express from "express";
+import fetch from "node-fetch";
 import robotsParser from "robots-parser";
+import { cleanObject, flattenArraysInObject, pickBySchema } from "./util.js";
 
 // Tool definitions
 const AIRBNB_SEARCH_TOOL: Tool = {
@@ -581,13 +582,67 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 });
 
-async function runServer() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error("Airbnb MCP Server running on stdio");
-}
+let app = express();
 
-runServer().catch((error) => {
-  console.error("Fatal error running server:", error);
-  process.exit(1);
+app.post("/mcp", async (req, res) => {
+  try {
+    let transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+    });
+
+    res.on("close", () => {
+      console.log("Request closed");
+      transport.close();
+      server.close();
+    });
+
+    await server.connect(transport);
+    await transport.handleRequest(req, res, req.body);
+  } catch (e) {
+    console.error("Error handling MCP request:", e);
+    if (!res.headersSent) {
+      res.status(500).json({
+        jsonrpc: "2.0",
+        error: {
+          code: -32603,
+          message: "Internal server error",
+        },
+        id: null,
+      });
+    }
+  }
+});
+
+// SSE notifications not supported in stateless mode
+app.get("/mcp", async (req, res) => {
+  console.log("Received GET MCP request");
+  res.writeHead(405).end(
+    JSON.stringify({
+      jsonrpc: "2.0",
+      error: {
+        code: -32000,
+        message: "Method not allowed.",
+      },
+      id: null,
+    }),
+  );
+});
+
+// Session termination not needed in stateless mode
+app.delete("/mcp", async (req, res) => {
+  console.log("Received DELETE MCP request");
+  res.writeHead(405).end(
+    JSON.stringify({
+      jsonrpc: "2.0",
+      error: {
+        code: -32000,
+        message: "Method not allowed.",
+      },
+      id: null,
+    }),
+  );
+});
+
+app.listen(3000, () => {
+  console.log(`Listening on port 3000`);
 });
