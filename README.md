@@ -50,21 +50,35 @@ This server uses streamable HTTP transport and runs as an Express server on port
 
 Before starting make sure [Node.js](https://nodejs.org/) and [pnpm](https://pnpm.io/) are installed on your desktop.
 
-1. Start the server:
+1. Clone the repository:
 
 ```bash
-pnpx -y gartmeier/mcp-server-airbnb
+git clone https://github.com/gartmeier/mcp-server-airbnb.git
+cd mcp-server-airbnb
+```
+
+2. Install dependencies and build:
+
+```bash
+pnpm install
+pnpm run build
+```
+
+3. Start the server:
+
+```bash
+node dist/index.js
 ```
 
 To ignore robots.txt for all requests, use the `--ignore-robots-txt` flag:
 
 ```bash
-pnpx -y gartmeier/mcp-server-airbnb --ignore-robots-txt
+node dist/index.js --ignore-robots-txt
 ```
 
-2. Go to: Settings > Developer > Edit Config
+4. Go to: Settings > Developer > Edit Config
 
-3. Add the following to your `claude_desktop_config.json`:
+5. Add the following to your `claude_desktop_config.json`:
 
 ```json
 {
@@ -79,7 +93,7 @@ pnpx -y gartmeier/mcp-server-airbnb --ignore-robots-txt
 }
 ```
 
-4. Restart Claude Desktop and plan your next trip that include Airbnbs!
+6. Restart Claude Desktop and plan your next trip that include Airbnbs!
 
 ## Build (for devs)
 
