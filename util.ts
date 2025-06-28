@@ -1,5 +1,5 @@
 export function cleanObject(obj: any) {
-  Object.keys(obj).forEach(key => {
+  Object.keys(obj).forEach((key) => {
     if (!obj[key] || key === "__typename") {
       delete obj[key];
     } else if (typeof obj[key] === "object") {
@@ -9,13 +9,13 @@ export function cleanObject(obj: any) {
 }
 
 export function pickBySchema(obj: any, schema: any): any {
-  if (typeof obj !== 'object' || obj === null) return obj;
-  
+  if (typeof obj !== "object" || obj === null) return obj;
+
   // If the object is an array, process each item
   if (Array.isArray(obj)) {
-    return obj.map(item => pickBySchema(item, schema));
+    return obj.map((item) => pickBySchema(item, schema));
   }
-  
+
   const result: Record<string, any> = {};
   for (const key in schema) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
@@ -25,7 +25,7 @@ export function pickBySchema(obj: any, schema: any): any {
         result[key] = obj[key];
       }
       // If the rule is an object, apply the schema recursively
-      else if (typeof rule === 'object' && rule !== null) {
+      else if (typeof rule === "object" && rule !== null) {
         result[key] = pickBySchema(obj[key], rule);
       }
     }
@@ -33,17 +33,22 @@ export function pickBySchema(obj: any, schema: any): any {
   return result;
 }
 
-export function flattenArraysInObject(input: any, inArray: boolean = false): any {
+export function flattenArraysInObject(
+  input: any,
+  inArray: boolean = false,
+): any {
   if (Array.isArray(input)) {
     // Process each item in the array with inArray=true so that any object
     // inside the array is flattened to a string.
-    const flatItems = input.map(item => flattenArraysInObject(item, true));
-    return flatItems.join(', ');
-  } else if (typeof input === 'object' && input !== null) {
+    const flatItems = input.map((item) => flattenArraysInObject(item, true));
+    return flatItems.join(", ");
+  } else if (typeof input === "object" && input !== null) {
     if (inArray) {
       // When inside an array, ignore the keys and flatten the object's values.
-      const values = Object.values(input).map(value => flattenArraysInObject(value, true));
-      return values.join(': ');
+      const values = Object.values(input).map((value) =>
+        flattenArraysInObject(value, true),
+      );
+      return values.join(": ");
     } else {
       // When not in an array, process each property recursively.
       const result: Record<string, any> = {};
